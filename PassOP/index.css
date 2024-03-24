@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.input-css {
+    @apply h-5 p-[11px] text-sm pl-3 rounded-full border-[1.5px] border-green-300;
+  }
+
+  .btn-css {
+    @apply border-[1.5px] font-bold bg-green-500 text-[13px] rounded-full px-2 flex items-center h-8 border-green-900 hover:bg-green-400;
+  }
+
+  .inputbtn-css {
+    @apply border text-sm border-white cursor-pointer;
+  }
+
+  .flex-css {
+    @apply flex text-xs md:text-sm items-center justify-center;
+  }
+
+
+  ::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    /* background: #616161; */
+    background-color: #3d4852;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #42a542;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #313a30;
+}
