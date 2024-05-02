@@ -7,24 +7,39 @@ import React from 'react';
 const Body = () => {
     const [input, setinput] = useState({ sitename: '', username: '', password: '' });
     const [passwordArray, setpasswordArray] = useState([]);
-
+    const ref = useRef();
+    const passwordref = useRef()
+    function handleChange(e) {
+        setinput({ ...input, [e.target.name]: e.target.value });
+    }
+    const getpasswords = async () => {
+        let req = await fetch("http://localhost:3000/")
+        let response = await req.json()
+        console.log(response);
+        setpasswordArray(response);
+    }
     useEffect(() => {
-        let passwords = localStorage.getItem("password");
-        if (passwords) {
-            setpasswordArray(JSON.parse(passwords));
-        }
+        getpasswords()
     }, []);
 
-    const savePassword = useCallback(() => {
+    const savepassword = useCallback(async () => {
         if (input.sitename.length >= 3 && input.username.length >= 3 && input.password.length >= 3) {
-            const updatepasswordArray = [...passwordArray, { ...input, id: uuidv4() }];
-            setpasswordArray(updatepasswordArray);
-            localStorage.setItem("password", JSON.stringify(updatepasswordArray));
+            // Add the new entry to the passwordArray state
+            const newPasswordEntry = { ...input, id: uuidv4() };
+            setpasswordArray([...passwordArray, newPasswordEntry]);
+            // Send a POST request to add the new entry to your server
+            await fetch("http://localhost:3000/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(newPasswordEntry)
+            });
             setinput({ sitename: '', username: '', password: '' });
         } else {
             toast.warning('Minimum 3 character Required in each field!', {
                 position: "top-right",
-                autoClose: 5000,
+                autoClose: 4000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: true,
@@ -34,15 +49,42 @@ const Body = () => {
             });
         }
     }, [passwordArray, input]);
-
-    function handleChange(e) {
-        setinput({ ...input, [e.target.name]: e.target.value });
+    //Function for Edit Password
+    const handleEdit = async (id) => {
+        console.log("The id is ", id);
+        setinput({ ...passwordArray.filter(index => index.id === id)[0], id: id })
+        setpasswordArray(passwordArray.filter(item => item.id !== id));
+        await fetch("http://localhost:3000/", {
+            method: "Delete", headers: {
+                "Content-Type": "application/json"
+            }, body: JSON.stringify({ id })
+        })
     }
+    // Function for Delete Password
+    const handleDelete = async (id) => {
+        const confirmed = window.confirm("Are you sure you want to delete?");
+        if (confirmed) {
+            setpasswordArray(passwordArray.filter(item => item.id !== id));
+            await fetch("http://localhost:3000/", {
+                method: "Delete", headers: {
+                    "Content-Type": "application/json"
+                }, body: JSON.stringify({ id })
+            })
+            toast.success('Deleted Password!', {
+                position: "top-right",
+                autoClose: 4000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "dark",
+            });
+        }
+    };
 
-    const ref = useRef();
-    const passwordref = useRef()
-    const showPassword = () => {
-        // passwordref.current.type = 'password'
+
+    const showpassword = () => {
         if (ref.current.src.includes("icons/hidden.png")) {
             ref.current.src = "icons/eye.png";
             passwordref.current.type = 'text'
@@ -52,7 +94,7 @@ const Body = () => {
         }
     };
     // Function for Copy Text
-    const copyText = (text) => {
+    const copytext = (text) => {
         toast.success('Copied to Clipboard!', {
             position: "top-right",
             autoClose: 1000,
@@ -65,19 +107,6 @@ const Body = () => {
         });
         navigator.clipboard.writeText(text);
     };
-    // Function for Delete Password
-    const handleDelete = (id) => {
-        const confirmed = window.confirm("Are you sure you want to delete?");
-        if (confirmed) {
-            setpasswordArray(passwordArray.filter(item => item.id !== id))
-            localStorage.setItem("password", JSON.stringify(passwordArray.filter(item => item.id !== id)))
-        }
-    };
-    const handleEdit = (id) => {
-        setinput(passwordArray.filter(index => index.id === id)[0])
-        setpasswordArray(passwordArray.filter(item => item.id !== id))
-        localStorage.setItem("password", JSON.stringify(passwordArray.filter(item => item.id !== id)))
-    }
     return (
         <>
             {/* Use React Toastify Library */}
@@ -116,7 +145,7 @@ const Body = () => {
 
                             <div className="relative">
                                 <input className="w-[140px] input-css pl-10" autoComplete="current-password" ref={passwordref} type="password" placeholder="Enter Password" value={input.password} name='password' onChange={handleChange} />
-                                <span className="absolute inset-y-0 left-[118px] w-[14px] cursor-pointer pt-[2px] flex items-center" onClick={showPassword}>
+                                <span className="absolute inset-y-0 left-[118px] w-[14px] cursor-pointer pt-[2px] flex items-center" onClick={showpassword}>
                                     <img ref={ref} src="icons/hidden.png" alt="eye" />
                                 </span>
                             </div>
@@ -125,7 +154,7 @@ const Body = () => {
                     </div>
                 </form>
                 <div className='btn mt-4 flex justify-center'>
-                    <button onClick={savePassword} className='btn-css w-[4.5rem]'>
+                    <button onClick={savepassword} className='btn-css w-[4.5rem]'>
                         <lord-icon
                             src="https://cdn.lordicon.com/jgnvfzqg.json"
                             trigger="hover"
@@ -151,7 +180,7 @@ const Body = () => {
                                     return <tr key={id}>
 
                                         <td className='inputbtn-css flex-wrap'>
-                                            <div className='flex-css' onClick={() => { copyText(input.sitename); }}>
+                                            <div className='flex-css' onClick={() => { copytext(input.sitename); }}>
                                                 <a href={`http://${input.sitename}`} target='_blank'>{input.sitename}</a>
                                                 <lord-icon
                                                     src="https://cdn.lordicon.com/iykgtsbt.json"
@@ -161,7 +190,7 @@ const Body = () => {
                                             </div>
                                         </td>
                                         <td className='inputbtn-css flex-wrap'>
-                                            <div className='flex-css' onClick={() => { copyText(input.username); }}>
+                                            <div className='flex-css' onClick={() => { copytext(input.username); }}>
                                                 {input.username}
                                                 <lord-icon
                                                     src="https://cdn.lordicon.com/iykgtsbt.json"
@@ -170,13 +199,14 @@ const Body = () => {
                                             </div>
                                         </td>
                                         <td className='inputbtn-css flex-wrap'>
-                                            <div className='flex-css' onClick={() => { copyText(input.password); }}>
-                                                {"*".repeat(input.password.length)}
+                                            <div className='flex-css' onClick={() => { copytext(input.password); }}>
+                                                {input.password && "*".repeat(input.password.length)}
                                                 <lord-icon
                                                     src="https://cdn.lordicon.com/iykgtsbt.json"
                                                     trigger="hover"
                                                     style={{ width: '18px' }} />
                                             </div>
+
                                         </td>
                                         <td className='inputbtn-css'>
                                             <span className='Edit Icon' onClick={() => { handleEdit(input.id) }}>
